@@ -1,0 +1,88 @@
+#### crewai demo
+
+### enabling verbose in code is completely optional
+## install packages
+
+!pip install -q crewai==1.14 crewai-tools litellm
+
+
+#### install packages
+
+import os
+from getpass import getpass
+from crewai import Agent, Task, Crew, LLM
+
+
+#### get groq API key
+
+
+#### getpass to encrypt key value at runtime
+groq_api_key = getpass("Enter Groq API key: ")
+os.environ["GROQ_API_KEY"] = groq_api_key
+
+
+#### initialize LLM through litellm
+
+llm = LLM(
+    model="groq/openai/gpt-oss-120b",
+    api_key=groq_api_key,
+    temperature=0.6,
+    max_tokens=2000
+)
+
+print("LLM Initialized")
+
+#### create resarcher agent
+
+resarcher = Agent(
+    role="Resarch Analyst",
+    goal="Resarch topics and provide clear, concise output",
+    backstory="You are a skilled resarcher, who helps in providing accurate information",
+    llm=llm,
+    verbose=True
+)
+
+## in crewai instead of prompt we use task/description
+
+resarch_task = Task(
+    description="""
+    Research the topic {topic}
+
+    Provide a brief overview in 3-4 lines
+    Focus on most important points of the resarch.
+    """,
+    ### next line is optional
+    agent=resarcher,
+    expected_output="""
+    A concide, bulleted overview of the topic in 3-4 lines.
+    """
+)
+
+
+### creating crew
+
+crew = Crew(
+    agent=[resarcher],
+    tasks=[resarch_task],
+    verbose=True
+)
+
+
+#### execute
+
+print("\n Starting resarch.....")
+
+print("=" * 50)
+
+results = crew.kickoff(
+    inputs={
+        "topic": "The furture of AI"
+    }
+)
+
+### printing the output
+
+print("Research Complete")
+print(results)
+
+print("=" * 50)
